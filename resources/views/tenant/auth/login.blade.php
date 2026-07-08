@@ -2,7 +2,7 @@
 
 @section('title', 'Tenant Login')
 @section('eyebrow', 'Tenant Access')
-@section('headline', 'Work inside {{ $tenant->name }} without touching any other tenant data.')
+@section('headline', 'Work inside ' . $tenant->name . ' without touching any other tenant data.')
 @section('subheadline', 'The middleware switches PostgreSQL schemas before authentication and task queries are resolved.')
 
 @section('content')

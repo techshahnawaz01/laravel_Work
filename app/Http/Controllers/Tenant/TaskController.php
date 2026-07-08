@@ -12,9 +12,11 @@ use App\Services\TaskService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class TaskController extends Controller
 {
+    use AuthorizesRequests;
     public function __construct(
         private TaskService $taskService
     ) {}

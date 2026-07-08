@@ -19,11 +19,21 @@ class DashboardController extends Controller
     {
         $user = Auth::guard('web')->user();
 
+        $stats = $this->taskService->statsForUser($user);
+        $recentTasks = $this->taskService->recentForUser($user);
+
+        $chartData = json_encode([
+            $stats['pending_tasks'] ?? 0,
+            $stats['in_progress_tasks'] ?? 0,
+            $stats['completed_tasks'] ?? 0,
+        ]);
+
         return view('tenant.dashboard', [
             'user' => $user,
             'tenant' => app('currentTenant'),
-            'stats' => $this->taskService->statsForUser($user),
-            'recentTasks' => $this->taskService->recentForUser($user),
+            'stats' => $stats,
+            'recentTasks' => $recentTasks,
+            'chartData' => $chartData,
         ]);
     }
 }

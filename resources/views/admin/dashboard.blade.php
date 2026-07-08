@@ -67,6 +67,22 @@
             </div>
 
             <div class="surface p-6">
+                <p class="text-sm uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Status Overview</p>
+                <h3 class="mt-2 text-xl font-semibold">Active vs Inactive</h3>
+                <div class="mt-6 max-w-sm">
+                    <canvas id="tenantStatusChart"></canvas>
+                </div>
+            </div>
+
+            <div class="surface p-6">
+                <p class="text-sm uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Tenant Creation</p>
+                <h3 class="mt-2 text-xl font-semibold">New tenants over time</h3>
+                <div class="mt-6">
+                    <canvas id="tenantTimelineChart"></canvas>
+                </div>
+            </div>
+
+            <div class="surface p-6">
                 <p class="text-sm uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Operations</p>
                 <ul class="mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-300">
                     <li class="surface-muted p-4">Public schema stores only tenant metadata and super admin accounts.</li>
@@ -76,4 +92,46 @@
             </div>
         </section>
     </div>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const statusCtx = document.getElementById('tenantStatusChart');
+    if (statusCtx) {
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ["Active", "Inactive"],
+                datasets: [{
+                    data: [0, 0],
+                    backgroundColor: ['#0d9488', '#f97316'],
+                }]
+            },
+            options: { maintainAspectRatio: false }
+        });
+    }
+
+    const timelineCtx = document.getElementById('tenantTimelineChart');
+    if (timelineCtx) {
+        new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: ["Jan", "Feb", "Mar"],
+                datasets: [{
+                    label: 'Tenants created',
+                    data: [1, 1, 2],
+                    borderColor: '#0d9488',
+                    backgroundColor: 'rgba(13, 148, 136, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+    }
+});
+</script>
+@endpush
 @endsection

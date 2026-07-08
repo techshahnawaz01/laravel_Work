@@ -17,10 +17,25 @@ class DashboardController extends Controller
 
     public function index(): View
     {
+        $stats = $this->tenantService->stats();
+        $tenants = $this->tenantService->paginate(100);
+
+        $statusLabels = json_encode(['Active', 'Inactive']);
+        $statusData = json_encode([$stats['active'], $stats['inactive']]);
+
+        $nameLabels = json_encode($tenants->pluck('name'));
+        $createdData = json_encode($tenants->pluck('created_at')->map(fn($d) => \Carbon\Carbon::parse($d)->format('M d')));
+
         return view('admin.dashboard', [
             'admin' => Auth::guard('admin')->user(),
-            'stats' => $this->tenantService->stats(),
+            'stats' => $stats,
             'recentTenants' => $this->tenantService->recent(),
+            'chart' => [
+                'statusLabels' => $statusLabels,
+                'statusData' => $statusData,
+                'nameLabels' => $nameLabels,
+                'createdData' => $createdData,
+            ],
         ]);
     }
 }
