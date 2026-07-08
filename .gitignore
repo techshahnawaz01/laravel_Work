@@ -1,0 +1,78 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor generated files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Environment files
+.env
+.env.backup
+.env.example.bak
+.env.production
+
+# Composer
+/vendor/
+composer.lock
+
+# NPM
+/node_modules/
+/public/build/
+/public/hot/
+/public/storage/
+
+# PHP
+.phpactor.json
+.phpunit.result.cache
+.phpunit.cache
+/auth.json
+
+# Laravel
+/storage/*.key
+/storage/pail/
+/storage/framework/views/*.php
+/storage/framework/cache/*
+/storage/logs/*.log
+
+# Test coverage
+/coverage/
+
+# Temporary files
+/tmp/
+/temp/
+*.tmp
+
+# Homestead
+Homestead.json
+Homestead.yaml
+
+# Custom tenant data (never commit tenant schemas!)
+/database/tenant_schemas/
+
+# Backup files
+*.bak
+*.backup
+.sql
+*.sql.gz
+
+# CI/CD
+.github/workflows/*.yml.bak
+
+# IDE
+.fleet/
+.nova/
+
+# Tenants (sensitive data - never commit!)
+/database/tenants/
