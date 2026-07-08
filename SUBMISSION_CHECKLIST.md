@@ -3,7 +3,6 @@
 ## Documentation
 
 - README
-- CONTRIBUTING
 - CHANGELOG
 - Quick start
 - Testing guide

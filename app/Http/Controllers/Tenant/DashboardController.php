@@ -23,7 +23,7 @@ class DashboardController extends Controller
             'user' => $user,
             'tenant' => app('currentTenant'),
             'stats' => $this->taskService->statsForUser($user),
-            'recentTasks' => $user->tasks()->latest()->limit(5)->get(),
+            'recentTasks' => $this->taskService->recentForUser($user),
         ]);
     }
 }
