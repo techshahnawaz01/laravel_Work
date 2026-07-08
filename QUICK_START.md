@@ -26,12 +26,6 @@ npm run dev
 
 ## Optional Host Setup
 
-For local tenant-style URLs, add a host entry:
-
-```bash
-127.0.0.1  acme.test
-```
-
 ## URLs
 
 Super admin:

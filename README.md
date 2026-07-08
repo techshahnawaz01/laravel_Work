@@ -79,18 +79,12 @@ php artisan db:seed
 
 Seeding creates:
 - `public.admins`
-- `public.tenants`
-- `tenant_acme`
-- tenant users and sample tasks
 
-Super admin:
-- `http://127.0.0.1:8000/admin/login`
-- `admin@example.com`
-- `password`
 
 ## Default Credentials
 
 Super admin:
+- Url: `http://127.0.0.1:8000/admin/login`
 - Email: `admin@example.com`
 - Password: `password`
  
