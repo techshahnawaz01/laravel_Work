@@ -5,22 +5,20 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\TenantStatus;
-use App\Traits\TenantConnection;
 use App\Traits\UsesUUID;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tenant extends Model
 {
     /** @use HasFactory<\Database\Factories\TenantFactory> */
-    use HasFactory, UsesUUID, TenantConnection;
+    use HasFactory, UsesUUID;
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
+      * The table associated with the model.
+      *
+      * @var string
+      */
     protected $table = 'tenants';
 
     /**
@@ -29,6 +27,7 @@ class Tenant extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'id',
         'name',
         'slug',
         'schema_name',
@@ -47,13 +46,8 @@ class Tenant extends Model
         ];
     }
 
-    /**
-     * Get the users for the tenant through the tenant schema.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function users(): HasMany
+    public function getRouteKeyName(): string
     {
-        return $this->hasMany(User::class, 'tenant_id', 'id');
+        return 'slug';
     }
 }

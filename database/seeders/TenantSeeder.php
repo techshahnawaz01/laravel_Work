@@ -4,66 +4,58 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\TaskStatus;
 use App\Models\Tenant;
-use App\Models\User;
+use App\Services\TenantSchemaService;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Ramsey\Uuid\Uuid;
 
 class TenantSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
+    public function run(TenantSchemaService $schemaService): void
     {
-        // Create sample tenant with all required data
-        $tenant = Tenant::create([
-            'name' => 'Acme Corporation',
-            'tenant_name' => 'acme',
-            'email' => 'admin@acme.com',
-            'domain' => 'acme.test',
-            'schema_name' => 'tenant_acme',
-            'status' => 'active',
-        ]);
-
-        // Create tenant admin user
-        $tenantAdmin = User::create([
-            'name' => 'Acme Admin',
-            'email' => 'admin@acme.com',
-            'password' => Hash::make('password'),
-            'tenant_id' => $tenant->id,
-        ]);
-
-        // Create additional tenant users
-        $users = [
+        $tenant = Tenant::query()->firstOrCreate(
+            ['slug' => 'acme'],
             [
-                'name' => 'John Doe',
-                'email' => 'john@acme.com',
-                'password' => Hash::make('password'),
-                'tenant_id' => $tenant->id,
-            ],
-            [
-                'name' => 'Jane Smith',
-                'email' => 'jane@acme.com',
-                'password' => Hash::make('password'),
-                'tenant_id' => $tenant->id,
-            ],
-            [
-                'name' => 'Bob Johnson',
-                'email' => 'bob@acme.com',
-                'password' => Hash::make('password'),
-                'tenant_id' => $tenant->id,
-            ],
-        ];
+                'id' => Uuid::uuid7()->toString(),
+                'name' => 'Acme Workspace',
+                'schema_name' => 'tenant_acme',
+                'status' => 'active',
+            ]
+        );
 
-        foreach ($users as $userData) {
-            User::create($userData);
+        $schemaService->createSchema($tenant);
+        $schemaService->migrate($tenant);
+        $schemaService->seedOwner($tenant, 'Acme Owner', 'owner@acme.test', 'password');
+
+        $schemaService->useTenant($tenant);
+
+        $userId = DB::table('users')->where('email', 'owner@acme.test')->value('id');
+
+        if ($userId && DB::table('tasks')->count() === 0) {
+            DB::table('tasks')->insert([
+                [
+                    'user_id' => $userId,
+                    'title' => 'Launch onboarding flow',
+                    'description' => 'Review the tenant dashboard and confirm all seeded data is visible.',
+                    'status' => TaskStatus::Pending->value,
+                    'due_date' => now()->addDays(3)->toDateString(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                [
+                    'user_id' => $userId,
+                    'title' => 'Configure team workflow',
+                    'description' => 'Create your first working task list for the tenant team.',
+                    'status' => TaskStatus::InProgress->value,
+                    'due_date' => now()->addWeek()->toDateString(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            ]);
         }
 
-        $this->command->info('Tenant seeded successfully!');
-        $this->command->info('Tenant: Acme Corporation');
-        $this->command->info('Domain: acme.test');
-        $this->command->info('Admin Email: admin@acme.com');
-        $this->command->info('Admin Password: password');
+        $schemaService->usePublicSchema();
     }
 }

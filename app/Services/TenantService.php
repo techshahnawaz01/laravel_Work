@@ -4,212 +4,95 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Contracts\TenantRepositoryInterface;
-use App\Contracts\TenantServiceInterface;
-use App\DTO\CreateTenantDTO;
-use App\DTO\UpdateTenantDTO;
 use App\Enums\TenantStatus;
 use App\Models\Tenant;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
-class TenantService implements TenantServiceInterface
+class TenantService
 {
     public function __construct(
-        private TenantRepositoryInterface $tenantRepository,
         private TenantSchemaService $schemaService
     ) {}
 
-    /**
-     * Get all tenants.
-     */
-    public function getAll(): Collection
+    public function paginate(int $perPage = 12): LengthAwarePaginator
     {
-        return $this->tenantRepository->all();
+        return Tenant::query()
+            ->latest()
+            ->paginate($perPage);
     }
 
-    /**
-     * Find a tenant by ID.
-     */
     public function findById(string $id): ?Tenant
     {
-        return $this->tenantRepository->findById($id);
+        return Tenant::query()->find($id);
     }
 
-    /**
-     * Find a tenant by schema name.
-     */
-    public function findBySchemaName(string $schemaName): ?Tenant
+    public function stats(): array
     {
-        return $this->tenantRepository->findBySchemaName($schemaName);
+        return [
+            'total' => Tenant::query()->count(),
+            'active' => Tenant::query()->where('status', TenantStatus::Active)->count(),
+            'inactive' => Tenant::query()->where('status', TenantStatus::Inactive)->count(),
+        ];
     }
 
-    /**
-     * Find a tenant by slug.
-     */
-    public function findBySlug(string $slug): ?Tenant
+    public function recent(int $limit = 5)
     {
-        return $this->tenantRepository->findBySlug($slug);
+        return Tenant::query()
+            ->latest()
+            ->limit($limit)
+            ->get();
     }
 
-    /**
-     * Find a tenant by ID (throws exception if not found).
-     */
-    public function getById(int $id): Tenant
+    public function create(array $data): Tenant
     {
-        $tenant = $this->findById((string) $id);
+        return DB::transaction(function () use ($data): Tenant {
+            $tenant = Tenant::query()->create([
+                'name' => $data['name'],
+                'slug' => $data['slug'],
+                'schema_name' => $data['schema_name'] ?? $this->makeSchemaName($data['slug']),
+                'status' => $data['status'] ?? TenantStatus::Active,
+            ]);
 
-        if (!$tenant) {
-            throw new \InvalidArgumentException("Tenant not found: {$id}");
-        }
-
-        return $tenant;
-    }
-
-    /**
-     * Find a tenant by slug (throws exception if not found).
-     */
-    public function getBySlug(string $slug): Tenant
-    {
-        $tenant = $this->tenantRepository->findBySlug($slug);
-
-        if (!$tenant) {
-            throw new \InvalidArgumentException("Tenant not found with slug: {$slug}");
-        }
-
-        return $tenant;
-    }
-
-    /**
-     * Create a new tenant with automatic schema setup.
-     */
-    public function create(CreateTenantDTO $dto): Tenant
-    {
-        return DB::transaction(function () use ($dto): Tenant {
-            // Create tenant record
-            $tenant = $this->tenantRepository->create($dto);
-
-            // Create schema
             $this->schemaService->createSchema($tenant);
-
-            // Run migrations if enabled
-            if (config('tenant.auto_migrate', true)) {
-                $this->schemaService->switchToSchema($tenant);
-                $this->schemaService->runTenantMigrations($tenant);
-                $this->schemaService->seedTenantData($tenant);
-                $this->schemaService->switchToSchema(new Tenant(['schema_name' => 'public']));
-            }
+            $this->schemaService->migrate($tenant);
+            $this->schemaService->seedOwner(
+                $tenant,
+                $data['owner_name'],
+                $data['owner_email'],
+                $data['owner_password'],
+            );
 
             return $tenant;
         });
     }
 
-    /**
-     * Update an existing tenant.
-     */
-    public function update(int $id, UpdateTenantDTO $dto): Tenant
+    public function update(Tenant $tenant, array $data): Tenant
     {
-        $tenant = $this->tenantRepository->update($dto);
+        $tenant->fill([
+            'name' => $data['name'],
+            'slug' => $data['slug'],
+            'status' => $data['status'],
+        ])->save();
 
         return $tenant->fresh();
     }
 
-    /**
-     * Delete a tenant.
-     */
-    public function delete(int $id): bool
+    public function activate(Tenant $tenant): Tenant
     {
-        $tenant = $this->findById((string) $id);
-
-        if (!$tenant) {
-            return false;
-        }
-
-        // Drop tenant schema
-        try {
-            $this->schemaService->dropSchema($tenant);
-        } catch (\Exception $e) {
-            // Log error but continue with deletion
-            Log::warning('Failed to drop tenant schema', [
-                'tenant_id' => $id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        return $this->tenantRepository->delete((string) $id);
-    }
-
-    /**
-     * Activate a tenant.
-     */
-    public function activate(int $id): Tenant
-    {
-        /** @var Tenant $tenant */
-        $tenant = $this->tenantRepository->activate((string) $id);
-
+        $tenant->update(['status' => TenantStatus::Active]);
         return $tenant->fresh();
     }
 
-    /**
-     * Deactivate a tenant.
-     */
-    public function deactivate(int $id): Tenant
+    public function deactivate(Tenant $tenant): Tenant
     {
-        /** @var Tenant $tenant */
-        $tenant = $this->tenantRepository->deactivate((string) $id);
-
+        $tenant->update(['status' => TenantStatus::Inactive]);
         return $tenant->fresh();
     }
 
-    /**
-     * Suspend a tenant.
-     */
-    public function suspend(int $id): Tenant
+    private function makeSchemaName(string $slug): string
     {
-        return $this->deactivate($id);
-    }
-
-    /**
-     * Check if a slug is available.
-     */
-    public function isSlugAvailable(string $slug): bool
-    {
-        return !$this->tenantRepository->existsBySlug($slug);
-    }
-
-    /**
-     * Get tenants by status.
-     */
-    public function getByStatus(TenantStatus $status): Collection
-    {
-        return Tenant::where('status', $status)->get();
-    }
-
-    /**
-     * Initialize a tenant (create schema, run migrations, seed data).
-     */
-    public function initializeTenant(int $id): void
-    {
-        $tenant = $this->findById((string) $id);
-
-        if (!$tenant) {
-            throw new \InvalidArgumentException("Tenant not found: {$id}");
-        }
-
-        // Create schema
-        $this->schemaService->createSchema($tenant);
-
-        // Switch to tenant schema
-        $this->schemaService->switchToSchema($tenant);
-
-        // Run migrations
-        $this->schemaService->runTenantMigrations($tenant);
-
-        // Seed default data
-        $this->schemaService->seedTenantData($tenant);
-
-        // Switch back to public schema
-        $this->schemaService->switchToSchema(new Tenant(['schema_name' => 'public']));
+        return 'tenant_'.Str::slug($slug, '_');
     }
 }

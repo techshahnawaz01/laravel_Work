@@ -5,77 +5,58 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Http\Requests\Tenant\LoginTenantRequest;
+use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class AuthController extends Controller
 {
     public function showLogin(): View
     {
-        return view('tenant.auth.login');
-    }
+        /** @var Tenant|null $tenant */
+        $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;
 
-    public function login(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
-
-        $credentials = $request->only('email', 'password');
-
-        if (Auth::guard('web')->attempt($credentials)) {
-            $request->session()->regenerate();
-            $user = Auth::guard('web')->user();
-            Log::info('Tenant login', ['user_id' => $user->id]);
-            return redirect()->intended('/tenant/dashboard');
+        if (!$tenant) {
+            $tenant = Tenant::query()->where('status', 'active')->orderBy('name')->first();
         }
 
-        return back()->withErrors(['email' => 'Invalid credentials']);
+        return view('tenant.auth.login', [
+            'tenant' => $tenant,
+        ]);
     }
 
-    public function showRegister(): View
+    public function login(LoginTenantRequest $request): RedirectResponse
     {
-        return view('tenant.auth.register');
-    }
+        if (Auth::guard('web')->attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+            $request->session()->regenerate();
 
-    public function register(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+            $tenant = app()->bound('currentTenant')
+                ? app('currentTenant')
+                : ($request->route('tenant')
+                    ? Tenant::query()->where('slug', $request->route('tenant'))->first()
+                    : Tenant::query()->where('status', 'active')->orderBy('name')->first());
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'tenant_id' => app('currentTenant')->id,
-        ]);
+            return redirect()->intended($tenant
+                ? route('tenant.dashboard', ['tenant' => $tenant->slug])
+                : route('admin.login'));
+        }
 
-        Auth::guard('web')->login($user);
-        Log::info('Tenant registered', ['user_id' => $user->id]);
-
-        return redirect('/tenant/dashboard');
+        return back()->withErrors([
+            'email' => 'The provided credentials are invalid.',
+        ])->onlyInput('email');
     }
 
     public function logout(Request $request): RedirectResponse
     {
-        $user = Auth::guard('web')->user();
-        if ($user) {
-            Log::info('Tenant logout', ['user_id' => $user->id]);
-        }
-
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('tenant.login');
+        $tenant = $request->route('tenant');
+
+        return redirect()->route($tenant ? 'tenant.login' : 'admin.login', $tenant ? ['tenant' => $tenant] : []);
     }
 }

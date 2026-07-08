@@ -5,83 +5,74 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Tenant\StoreTaskRequest;
+use App\Http\Requests\Tenant\UpdateTaskRequest;
 use App\Models\Task;
+use App\Services\TaskService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class TaskController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(
+        private TaskService $taskService
+    ) {}
+
+    public function index(): View
     {
         $user = Auth::guard('web')->user();
-        $tasks = Task::where('created_by', $user->id)
-            ->orWhere('assigned_to', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-        return view('tenant.tasks.index', compact('tasks', 'user'));
-    }
 
-    public function create()
-    {
-        return view('tenant.tasks.create');
-    }
-
-    public function store(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'required|in:pending,in_progress,completed',
-            'due_date' => 'nullable|date',
+        return view('tenant.tasks.index', [
+            'tasks' => $this->taskService->paginateForUser($user),
+            'user' => $user,
+            'tenant' => app('currentTenant'),
         ]);
-        $validated['created_by'] = Auth::guard('web')->id();
-        $validated['assigned_to'] = Auth::guard('web')->id();
-        Task::create($validated);
-        return redirect()->route('tenant.tasks.index')->with('success', 'Task created');
     }
 
-    public function show(Task $task)
+    public function create(): View
     {
-        $user = Auth::guard('web')->user();
-        if ($task->created_by !== $user->id && $task->assigned_to !== $user->id) {
-            abort(403);
-        }
-        return view('tenant.tasks.show', compact('task', 'user'));
-    }
-
-    public function edit(Task $task)
-    {
-        $user = Auth::guard('web')->user();
-        if ($task->created_by !== $user->id && $task->assigned_to !== $user->id) {
-            abort(403);
-        }
-        return view('tenant.tasks.edit', compact('task'));
-    }
-
-    public function update(Request $request, Task $task): RedirectResponse
-    {
-        $user = Auth::guard('web')->user();
-        if ($task->created_by !== $user->id && $task->assigned_to !== $user->id) {
-            abort(403);
-        }
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'required|in:pending,in_progress,completed',
-            'due_date' => 'nullable|date',
+        return view('tenant.tasks.create', [
+            'tenant' => app('currentTenant'),
         ]);
-        $task->update($validated);
-        return redirect()->route('tenant.tasks.index')->with('success', 'Task updated');
     }
 
-    public function destroy(Task $task): RedirectResponse
+    public function store(StoreTaskRequest $request): RedirectResponse
     {
-        $user = Auth::guard('web')->user();
-        if ($task->created_by !== $user->id && $task->assigned_to !== $user->id) {
-            abort(403);
-        }
-        $task->delete();
-        return redirect()->route('tenant.tasks.index')->with('success', 'Task deleted');
+        $this->taskService->create(Auth::guard('web')->user(), $request->validated());
+
+        return redirect()
+            ->route('tenant.tasks.index', ['tenant' => $request->route('tenant')])
+            ->with('success', 'Task created successfully.');
+    }
+
+    public function edit(string $tenant, Task $task): View
+    {
+        $this->authorize('update', $task);
+
+        return view('tenant.tasks.edit', [
+            'task' => $task,
+            'tenant' => app('currentTenant'),
+        ]);
+    }
+
+    public function update(UpdateTaskRequest $request, string $tenant, Task $task): RedirectResponse
+    {
+        $this->authorize('update', $task);
+        $this->taskService->update($task, $request->validated());
+
+        return redirect()
+            ->route('tenant.tasks.index', ['tenant' => $request->route('tenant')])
+            ->with('success', 'Task updated successfully.');
+    }
+
+    public function destroy(string $tenant, Task $task): RedirectResponse
+    {
+        $this->authorize('delete', $task);
+        $this->taskService->delete($task);
+
+        return redirect()
+            ->route('tenant.tasks.index', ['tenant' => $tenant])
+            ->with('success', 'Task deleted successfully.');
     }
 }

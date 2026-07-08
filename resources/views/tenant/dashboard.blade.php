@@ -3,65 +3,73 @@
 @section('title', 'Dashboard')
 
 @section('content')
-    <div class="py-8">
-        <!-- Welcome Section -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">Welcome, {{ $user->name }}!</h1>
-            <p class="text-gray-600 mt-2">Here's your task overview</p>
-        </div>
+    <div class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <section class="space-y-6">
+            <div class="surface p-6">
+                <p class="text-sm uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Welcome back</p>
+                <h3 class="mt-2 text-3xl font-semibold">{{ $user->name }}</h3>
+                <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">You are operating inside the `{{ $tenant->schema_name }}` schema. Task data remains isolated from every other tenant.</p>
+            </div>
 
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <!-- Total Tasks -->
-            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 text-sm font-medium">Total Tasks</p>
-                        <p class="text-3xl font-bold text-gray-800">{{ $stats['total_tasks'] }}</p>
-                    </div>
-                    <div class="bg-blue-100 rounded-full p-3">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                    </div>
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div class="surface p-6">
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Total tasks</p>
+                    <p class="mt-4 text-4xl font-semibold">{{ $stats['total_tasks'] }}</p>
+                </div>
+                <div class="surface p-6">
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Pending</p>
+                    <p class="mt-4 text-4xl font-semibold text-amber-600 dark:text-amber-300">{{ $stats['pending_tasks'] }}</p>
+                </div>
+                <div class="surface p-6">
+                    <p class="text-sm text-slate-500 dark:text-slate-400">In progress</p>
+                    <p class="mt-4 text-4xl font-semibold text-sky-600 dark:text-sky-300">{{ $stats['in_progress_tasks'] }}</p>
+                </div>
+                <div class="surface p-6">
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Completed</p>
+                    <p class="mt-4 text-4xl font-semibold text-teal-600 dark:text-teal-300">{{ $stats['completed_tasks'] }}</p>
                 </div>
             </div>
 
-            <!-- Pending Tasks -->
-            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500">
+            <div class="surface p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-500 text-sm font-medium">Pending Tasks</p>
-                        <p class="text-3xl font-bold text-gray-800">{{ $stats['pending_tasks'] }}</p>
+                        <p class="text-sm uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Recent tasks</p>
+                        <h3 class="mt-2 text-xl font-semibold">Latest activity</h3>
                     </div>
-                    <div class="bg-yellow-100 rounded-full p-3">
-                        <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
+                    <a href="{{ route('tenant.tasks.index', ['tenant' => $tenant->slug]) }}" class="btn-secondary">Manage tasks</a>
                 </div>
-            </div>
 
-            <!-- Completed Tasks -->
-            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 text-sm font-medium">Completed Tasks</p>
-                        <p class="text-3xl font-bold text-gray-800">{{ $stats['completed_tasks'] }}</p>
-                    </div>
-                    <div class="bg-green-100 rounded-full p-3">
-                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
+                <div class="mt-6 space-y-3">
+                    @forelse($recentTasks as $task)
+                        <div class="surface-muted flex items-center justify-between p-4">
+                            <div>
+                                <p class="font-medium">{{ $task->title }}</p>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ $task->due_date?->format('M d, Y') ?? 'No due date' }}</p>
+                            </div>
+                            <span class="badge {{ $task->status->value === 'completed' ? 'bg-teal-100 text-teal-800 dark:bg-teal-500/15 dark:text-teal-300' : ($task->status->value === 'in_progress' ? 'bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300') }}">
+                                {{ $task->status->label() }}
+                            </span>
+                        </div>
+                    @empty
+                        <div class="surface-muted p-5 text-sm text-slate-500 dark:text-slate-400">No tasks yet. Create the first task to start working inside this tenant schema.</div>
+                    @endforelse
                 </div>
             </div>
         </div>
 
-        <!-- Recent Tasks Section -->
-        <div class="bg-white rounded-xl shadow-md p-6">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Your Tasks</h3>
-            <p class="text-gray-600">Task list will appear here.</p>
-        </div>
+        <section class="space-y-6">
+            <div class="surface p-6">
+                <p class="text-sm uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Quick actions</p>
+                <a href="{{ route('tenant.tasks.create', ['tenant' => $tenant->slug]) }}" class="btn-primary mt-5 w-full">Create Task</a>
+            </div>
+            <div class="surface p-6">
+                <p class="text-sm uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Isolation guarantee</p>
+                <ul class="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                    <li class="surface-muted p-4">`{{ $tenant->schema_name }}` is selected before task queries execute.</li>
+                    <li class="surface-muted p-4">Only your own tasks are visible through authorization and query scoping.</li>
+                    <li class="surface-muted p-4">Admin records remain stored in the `public` schema.</li>
+                </ul>
+            </div>
+        </section>
     </div>
 @endsection

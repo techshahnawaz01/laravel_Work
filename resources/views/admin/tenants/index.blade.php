@@ -3,68 +3,69 @@
 @section('title', 'Tenants')
 
 @section('content')
-    <div class="bg-white rounded-xl shadow-md p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-semibold text-gray-800">All Tenants</h3>
-            <a href="{{ url('/admin/tenants/create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
-                + Add Tenant
-            </a>
+    <div class="surface p-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Tenant registry</p>
+                <h3 class="mt-2 text-xl font-semibold">Provisioned workspaces</h3>
+            </div>
+            <a href="{{ route('admin.tenants.create') }}" class="btn-primary">Create Tenant</a>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full">
+        <div class="table-wrap mt-6">
+            <table class="table-ui">
                 <thead>
-                    <tr class="border-b-2 border-gray-200">
-                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Name</th>
-                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Slug</th>
-                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Schema</th>
-                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Created</th>
-                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
+                    <tr>
+                        <th>Name</th>
+                        <th>Slug</th>
+                        <th>Schema</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th class="text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-slate-200/70 dark:divide-white/10">
                     @forelse($tenants as $tenant)
-                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                            <td class="py-3 px-4 font-medium">{{ $tenant->name }}</td>
-                            <td class="py-3 px-4">{{ $tenant->slug }}</td>
-                            <td class="py-3 px-4 font-mono text-sm">{{ $tenant->schema_name }}</td>
-                            <td class="py-3 px-4">
-                                <span class="px-3 py-1 rounded-full text-xs font-medium {{ $tenant->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ ucfirst($tenant->status) }}
+                        <tr>
+                            <td class="font-medium">{{ $tenant->name }}</td>
+                            <td>{{ $tenant->slug }}</td>
+                            <td class="font-mono text-xs">{{ $tenant->schema_name }}</td>
+                            <td>
+                                <span class="badge {{ $tenant->status->isActive() ? 'bg-teal-100 text-teal-800 dark:bg-teal-500/15 dark:text-teal-300' : 'bg-orange-100 text-orange-800 dark:bg-orange-500/15 dark:text-orange-300' }}">
+                                    {{ $tenant->status->label() }}
                                 </span>
                             </td>
-                            <td class="py-3 px-4">{{ $tenant->created_at->format('M d, Y') }}</td>
-                            <td class="py-3 px-4">
-                                <a href="{{ url('/admin/tenants/' . $tenant->id) }}" class="text-blue-600 hover:text-blue-800 mr-2">View</a>
-                                <a href="{{ url('/admin/tenants/' . $tenant->id . '/edit') }}" class="text-green-600 hover:text-green-800 mr-2">Edit</a>
-                                
-                                @if($tenant->status === 'active')
-                                    <form action="{{ url('/admin/tenants/' . $tenant->id . '/deactivate') }}" method="POST" class="inline">
+                            <td>{{ $tenant->created_at->format('M d, Y') }}</td>
+                            <td>
+                                <div class="flex justify-end gap-2">
+                                    <a href="{{ route('admin.tenants.edit', $tenant->id) }}" class="btn-secondary px-3 py-2">Edit</a>
+                                    <form id="tenant-toggle-{{ $tenant->id }}" action="{{ $tenant->status->isActive() ? route('admin.tenants.deactivate', $tenant->id) : route('admin.tenants.activate', $tenant->id) }}" method="POST">
                                         @csrf
-                                        <button type="submit" class="text-orange-600 hover:text-orange-800 mr-2">Deactivate</button>
+                                        <button
+                                            type="submit"
+                                            class="{{ $tenant->status->isActive() ? 'btn-danger' : 'btn-primary' }} px-3 py-2"
+                                            data-confirm
+                                            data-confirm-form="tenant-toggle-{{ $tenant->id }}"
+                                            data-confirm-title="{{ $tenant->status->isActive() ? 'Deactivate tenant?' : 'Activate tenant?' }}"
+                                            data-confirm-message="This changes access to the tenant workspace without touching other tenant schemas."
+                                        >
+                                            {{ $tenant->status->isActive() ? 'Deactivate' : 'Activate' }}
+                                        </button>
                                     </form>
-                                @else
-                                    <form action="{{ url('/admin/tenants/' . $tenant->id . '/activate') }}" method="POST" class="inline">
-                                        @csrf
-                                        <button type="submit" class="text-green-600 hover:text-green-800 mr-2">Activate</button>
-                                    </form>
-                                @endif
-                                
-                                <form action="{{ url('/admin/tenants/' . $tenant->id) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-800" onclick="return confirm('Are you sure?')">Delete</button>
-                                </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-8 text-center text-gray-500">No tenants found</td>
+                            <td colspan="6" class="px-6 py-10 text-center text-slate-500 dark:text-slate-400">No tenants created yet.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <div class="mt-6">
+            {{ $tenants->links() }}
         </div>
     </div>
 @endsection

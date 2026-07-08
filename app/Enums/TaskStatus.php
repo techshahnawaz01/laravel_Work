@@ -9,7 +9,6 @@ enum TaskStatus: string
     case Pending = 'pending';
     case InProgress = 'in_progress';
     case Completed = 'completed';
-    case Cancelled = 'cancelled';
 
     public function label(): string
     {
@@ -17,7 +16,6 @@ enum TaskStatus: string
             self::Pending => 'Pending',
             self::InProgress => 'In Progress',
             self::Completed => 'Completed',
-            self::Cancelled => 'Cancelled',
         };
     }
 
@@ -34,16 +32,6 @@ enum TaskStatus: string
     public function isCompleted(): bool
     {
         return $this === self::Completed;
-    }
-
-    public function isCancelled(): bool
-    {
-        return $this === self::Cancelled;
-    }
-
-    public function isTerminal(): bool
-    {
-        return $this === self::Completed || $this === self::Cancelled;
     }
 
     public static function values(): array

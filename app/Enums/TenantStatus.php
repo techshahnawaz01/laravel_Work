@@ -8,14 +8,12 @@ enum TenantStatus: string
 {
     case Active = 'active';
     case Inactive = 'inactive';
-    case Suspended = 'suspended';
 
     public function label(): string
     {
         return match ($this) {
             self::Active => 'Active',
             self::Inactive => 'Inactive',
-            self::Suspended => 'Suspended',
         };
     }
 
@@ -27,11 +25,6 @@ enum TenantStatus: string
     public function isInactive(): bool
     {
         return $this === self::Inactive;
-    }
-
-    public function isSuspended(): bool
-    {
-        return $this === self::Suspended;
     }
 
     public static function values(): array

@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Traits\UsesUUID;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, UsesUUID;
+    use HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -25,7 +24,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'tenant_id',
     ];
 
     /**
@@ -51,13 +49,8 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Get the tenant that the user belongs to.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function tenant(): BelongsTo
+    public function tasks(): HasMany
     {
-        return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
+        return $this->hasMany(Task::class);
     }
 }

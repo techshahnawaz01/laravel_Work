@@ -6,6 +6,96 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Sora', ui-sans-serif, system-ui, sans-serif;
+    --color-ink-950: #07111f;
+    --color-ink-900: #0f1728;
+    --color-ink-800: #182538;
+    --color-panel: #f8fafc;
+    --color-brand-500: #0f766e;
+    --color-brand-600: #115e59;
+    --color-accent-500: #ea580c;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+    html {
+        @apply bg-slate-950 text-slate-900 antialiased;
+    }
+
+    body {
+        @apply min-h-screen bg-[radial-gradient(circle_at_top,_rgba(15,118,110,0.18),_transparent_30%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_52%,#f8fafc_100%)] text-slate-900 dark:bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.22),_transparent_25%),linear-gradient(180deg,#020617_0%,#0f172a_55%,#111827_100%)] dark:text-slate-100;
+    }
+
+    input,
+    select,
+    textarea {
+        @apply outline-none;
+    }
+}
+
+@layer components {
+    .shell {
+        @apply min-h-screen lg:grid lg:grid-cols-[280px_minmax(0,1fr)];
+    }
+
+    .shell-sidebar {
+        @apply border-r border-white/10 bg-slate-950/80 px-6 py-8 text-slate-100 backdrop-blur;
+    }
+
+    .shell-main {
+        @apply min-w-0 px-4 py-4 sm:px-6 lg:px-8 lg:py-8;
+    }
+
+    .surface {
+        @apply rounded-3xl border border-slate-200/70 bg-white/85 shadow-[0_24px_80px_-32px_rgba(15,23,42,0.35)] backdrop-blur dark:border-white/10 dark:bg-slate-900/75;
+    }
+
+    .surface-muted {
+        @apply rounded-2xl border border-slate-200/70 bg-slate-50/80 dark:border-white/10 dark:bg-slate-950/40;
+    }
+
+    .nav-link {
+        @apply flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white;
+    }
+
+    .nav-link-active {
+        @apply bg-white text-slate-900 shadow-lg shadow-teal-500/10;
+    }
+
+    .btn-primary {
+        @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-70;
+    }
+
+    .btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:hover:bg-white/10;
+    }
+
+    .btn-danger {
+        @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-orange-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-70;
+    }
+
+    .form-field {
+        @apply mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/15 dark:border-white/10 dark:bg-slate-950/50 dark:text-slate-100;
+    }
+
+    .table-wrap {
+        @apply overflow-hidden rounded-3xl border border-slate-200/70 dark:border-white/10;
+    }
+
+    .table-ui {
+        @apply min-w-full divide-y divide-slate-200/70 text-sm dark:divide-white/10;
+    }
+
+    .table-ui th {
+        @apply bg-slate-50 px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:bg-slate-950/40 dark:text-slate-400;
+    }
+
+    .table-ui td {
+        @apply px-6 py-4 align-top text-slate-700 dark:text-slate-200;
+    }
+
+    .badge {
+        @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold;
+    }
 }

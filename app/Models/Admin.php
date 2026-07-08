@@ -8,12 +8,11 @@ use App\Traits\UsesUUID;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Admin extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\AdminFactory> */
-    use HasFactory, Notifiable, SoftDeletes, UsesUUID;
+    use HasFactory, Notifiable, UsesUUID;
 
     /**
      * The table associated with the model.

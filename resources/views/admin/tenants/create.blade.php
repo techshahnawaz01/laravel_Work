@@ -3,53 +3,49 @@
 @section('title', 'Create Tenant')
 
 @section('content')
-    <div class="bg-white rounded-xl shadow-md p-6 max-w-2xl">
-        <h3 class="text-xl font-semibold text-gray-800 mb-6">Create New Tenant</h3>
+    <div class="mx-auto max-w-4xl space-y-6">
+        <div class="surface p-6">
+            <p class="text-sm uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Provision new workspace</p>
+            <h3 class="mt-2 text-2xl font-semibold">Create tenant and seed the first account</h3>
+            <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">The provisioning flow creates the tenant record, PostgreSQL schema, tenant tables, and owner credentials in one transaction-backed operation.</p>
+        </div>
 
-        <form action="{{ url('/admin/tenants') }}" method="POST">
+        <form action="{{ route('admin.tenants.store') }}" method="POST" class="surface p-6">
             @csrf
-
-            <div class="mb-6">
-                <label class="block text-gray-700 font-medium mb-2">Tenant Name</label>
-                <input type="text" name="name" value="{{ old('name') }}" required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                @error('name')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
+            <div class="grid gap-6 md:grid-cols-2">
+                <div>
+                    <label for="name" class="text-sm font-medium">Tenant name</label>
+                    <input id="name" name="name" value="{{ old('name') }}" class="form-field" required>
+                </div>
+                <div>
+                    <label for="slug" class="text-sm font-medium">Tenant slug</label>
+                    <input id="slug" name="slug" value="{{ old('slug') }}" class="form-field" required>
+                </div>
+                <div>
+                    <label for="owner_name" class="text-sm font-medium">Owner name</label>
+                    <input id="owner_name" name="owner_name" value="{{ old('owner_name') }}" class="form-field" required>
+                </div>
+                <div>
+                    <label for="owner_email" class="text-sm font-medium">Owner email</label>
+                    <input id="owner_email" type="email" name="owner_email" value="{{ old('owner_email') }}" class="form-field" required>
+                </div>
+                <div>
+                    <label for="owner_password" class="text-sm font-medium">Owner password</label>
+                    <input id="owner_password" type="password" name="owner_password" class="form-field" required>
+                </div>
+                <div>
+                    <label for="status" class="text-sm font-medium">Initial status</label>
+                    <select id="status" name="status" class="form-field" required>
+                        @foreach($statuses as $status)
+                            <option value="{{ $status->value }}" @selected(old('status', 'active') === $status->value)>{{ $status->label() }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
 
-            <div class="mb-6">
-                <label class="block text-gray-700 font-medium mb-2">Slug</label>
-                <input type="text" name="slug" value="{{ old('slug') }}" required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <p class="text-gray-500 text-sm mt-1">URL-friendly identifier (e.g., my-company)</p>
-                @error('slug')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div class="mb-6">
-                <label class="block text-gray-700 font-medium mb-2">Schema Name</label>
-                <input type="text" name="schema_name" value="{{ old('schema_name') }}"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <p class="text-gray-500 text-sm mt-1">Leave empty to auto-generate from slug</p>
-            </div>
-
-            <div class="mb-6">
-                <label class="block text-gray-700 font-medium mb-2">Status</label>
-                <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                </select>
-            </div>
-
-            <div class="flex gap-4">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition">
-                    Create Tenant
-                </button>
-                <a href="{{ url('/admin/tenants') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition">
-                    Cancel
-                </a>
+            <div class="mt-8 flex justify-end gap-3">
+                <a href="{{ route('admin.tenants.index') }}" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary" data-loading-button data-loading-text="Provisioning...">Provision Tenant</button>
             </div>
         </form>
     </div>

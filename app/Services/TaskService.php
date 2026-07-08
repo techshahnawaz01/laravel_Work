@@ -4,153 +4,44 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Contracts\TaskRepositoryInterface;
-use App\Contracts\TaskServiceInterface;
-use App\DTO\CreateTaskDTO;
-use App\DTO\UpdateTaskDTO;
-use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Models\Task;
-use Illuminate\Database\Eloquent\Collection;
+use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-class TaskService implements TaskServiceInterface
+class TaskService
 {
-    public function __construct(
-        private TaskRepositoryInterface $taskRepository
-    ) {}
-
-    /**
-     * Get all tasks.
-     */
-    public function getAll(int $tenantId): Collection
+    public function paginateForUser(User $user, int $perPage = 10): LengthAwarePaginator
     {
-        return $this->taskRepository->all();
+        return Task::query()
+            ->where('user_id', $user->id)
+            ->latest()
+            ->paginate($perPage);
     }
 
-    /**
-     * Find a task by ID.
-     */
-    public function getById(int $id): Task
+    public function create(User $user, array $data): Task
     {
-        $task = $this->taskRepository->findById((string) $id);
-
-        if (!$task) {
-            throw new \InvalidArgumentException("Task not found: {$id}");
-        }
-
-        return $task;
+        return $user->tasks()->create($data);
     }
 
-    /**
-     * Get tasks for a specific tenant.
-     */
-    public function getByTenant(int $tenantId): Collection
+    public function update(Task $task, array $data): Task
     {
-        return Task::where('tenant_id', $tenantId)->get();
-    }
-
-    /**
-     * Get tasks by status for a tenant.
-     */
-    public function getByStatus(int $tenantId, TaskStatus $status): Collection
-    {
-        return Task::where('tenant_id', $tenantId)
-            ->where('status', $status)
-            ->get();
-    }
-
-    /**
-     * Get tasks by priority for a tenant.
-     */
-    public function getByPriority(int $tenantId, TaskPriority $priority): Collection
-    {
-        return Task::where('tenant_id', $tenantId)
-            ->where('priority', $priority)
-            ->get();
-    }
-
-    /**
-     * Create a new task.
-     */
-    public function create(CreateTaskDTO $dto): Task
-    {
-        return $this->taskRepository->create($dto);
-    }
-
-    /**
-     * Update an existing task.
-     */
-    public function update(int $id, UpdateTaskDTO $dto): Task
-    {
-        $task = $this->taskRepository->findById((string) $id);
-
-        if (!$task) {
-            throw new \InvalidArgumentException("Task not found: {$id}");
-        }
-
-        $this->taskRepository->update($dto);
-
+        $task->update($data);
         return $task->fresh();
     }
 
-    /**
-     * Delete a task.
-     */
-    public function delete(int $id): bool
+    public function delete(Task $task): void
     {
-        return $this->taskRepository->delete((string) $id);
+        $task->delete();
     }
 
-    /**
-     * Complete a task.
-     */
-    public function complete(int $id): Task
+    public function statsForUser(User $user): array
     {
-        $task = $this->getById($id);
-
-        $task->update(['status' => TaskStatus::Completed]);
-
-        return $task->fresh();
-    }
-
-    /**
-     * Cancel a task.
-     */
-    public function cancel(int $id): Task
-    {
-        $task = $this->getById($id);
-
-        $task->update(['status' => TaskStatus::Cancelled]);
-
-        return $task->fresh();
-    }
-
-    /**
-     * Get overdue tasks for a tenant.
-     */
-    public function getOverdueTasks(int $tenantId): Collection
-    {
-        return Task::where('tenant_id', $tenantId)
-            ->where('due_date', '<', now())
-            ->whereNotIn('status', [TaskStatus::Completed, TaskStatus::Cancelled])
-            ->get();
-    }
-
-    /**
-     * Get task count for a tenant.
-     */
-    public function getTaskCount(int $tenantId): int
-    {
-        return Task::where('tenant_id', $tenantId)->count();
-    }
-
-    /**
-     * Find task by tenant and ID.
-     */
-    public function findByTenantAndId(int $tenantId, int $id): ?Task
-    {
-        return Task::where('tenant_id', $tenantId)
-            ->where('id', $id)
-            ->first();
+        return [
+            'total_tasks' => Task::query()->where('user_id', $user->id)->count(),
+            'pending_tasks' => Task::query()->where('user_id', $user->id)->where('status', TaskStatus::Pending)->count(),
+            'in_progress_tasks' => Task::query()->where('user_id', $user->id)->where('status', TaskStatus::InProgress)->count(),
+            'completed_tasks' => Task::query()->where('user_id', $user->id)->where('status', TaskStatus::Completed)->count(),
+        ];
     }
 }

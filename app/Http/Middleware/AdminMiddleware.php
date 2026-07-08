@@ -16,10 +16,13 @@ class AdminMiddleware
     public function handle(Request $request, Closure $next): mixed
     {
         if (!Auth::guard('admin')->check()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Please login as admin.',
-            ], 401);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized. Please login as admin.',
+                ], 401);
+            }
+            return redirect()->route('admin.login');
         }
 
         return $next($request);

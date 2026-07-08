@@ -7,107 +7,64 @@ namespace App\Services;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 
 class TenantSchemaService
 {
-    /**
-     * Create a new PostgreSQL schema for a tenant.
-     */
     public function createSchema(Tenant $tenant): void
     {
-        $schemaName = $tenant->schema_name;
-
-        DB::statement("CREATE SCHEMA IF NOT EXISTS \"{$schemaName}\"");
-
-        Log::info('Tenant schema created', [
-            'tenant_id' => $tenant->id,
-            'schema_name' => $schemaName,
-        ]);
+        DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $tenant->schema_name));
     }
 
-    /**
-     * Drop a PostgreSQL schema for a tenant.
-     */
     public function dropSchema(Tenant $tenant): void
     {
-        $schemaName = $tenant->schema_name;
-
-        DB::statement("DROP SCHEMA IF EXISTS \"{$schemaName}\" CASCADE");
-
-        Log::info('Tenant schema dropped', [
-            'tenant_id' => $tenant->id,
-            'schema_name' => $schemaName,
-        ]);
+        DB::statement(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $tenant->schema_name));
     }
 
-    /**
-     * Run tenant migrations on the specific schema.
-     */
-    public function runTenantMigrations(Tenant $tenant): void
+    public function useTenant(Tenant $tenant): void
     {
-        $schemaName = $tenant->schema_name;
+        $this->setSearchPath($tenant->schema_name);
+    }
 
-        config(['tenant.schema_name' => $schemaName]);
+    public function usePublicSchema(): void
+    {
+        $this->setSearchPath('public');
+    }
 
-        $this->switchToSchema($tenant);
+    public function migrate(Tenant $tenant): void
+    {
+        $this->useTenant($tenant);
 
         Artisan::call('migrate', [
             '--path' => 'database/migrations/tenant',
+            '--database' => 'pgsql',
             '--force' => true,
-            '--realpath' => true,
         ]);
 
-        Log::info('Tenant migrations completed', [
-            'tenant_id' => $tenant->id,
-            'schema_name' => $schemaName,
-        ]);
+        $this->usePublicSchema();
     }
 
-    /**
-     * Seed default tenant data.
-     */
-    public function seedTenantData(Tenant $tenant): void
+    public function seedOwner(Tenant $tenant, string $name, string $email, string $password): void
     {
-        $this->switchToSchema($tenant);
+        $this->useTenant($tenant);
 
-        \App\Models\User::create([
-            'name' => $tenant->company_name . ' Admin',
-            'email' => $tenant->email,
-            'password' => bcrypt('password'),
-            'tenant_id' => $tenant->id,
-        ]);
+        \App\Models\User::query()->updateOrCreate(
+            ['email' => $email],
+            [
+                'name' => $name,
+                'password' => Hash::make($password),
+            ]
+        );
 
-        Log::info('Tenant default data seeded', [
-            'tenant_id' => $tenant->id,
-            'schema_name' => $tenant->schema_name,
-        ]);
+        $this->usePublicSchema();
     }
 
-    /**
-     * Switch the database search_path to the tenant schema.
-     */
-    public function switchToSchema(Tenant $tenant): void
+    private function setSearchPath(string $schema): void
     {
-        $schemaName = $tenant->schema_name;
-        DB::statement("SET search_path TO \"{$schemaName}\", public");
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
 
-        Log::info('Switched to tenant schema', [
-            'tenant_id' => $tenant->id,
-            'schema_name' => $schemaName,
-        ]);
-    }
-
-    /**
-     * Get the current schema from search_path.
-     */
-    public function getCurrentSchema(): string
-    {
-        $result = DB::select("SHOW search_path");
-        $searchPath = $result[0]->search_path ?? 'public';
-        
-        $schemas = explode(',', $searchPath);
-        
-        return trim($schemas[0], '" ');
+        DB::statement(sprintf('SET search_path TO "%s", public', $schema));
     }
 }

@@ -1,50 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tenant Login - {{ config('app.name') }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gradient-to-br from-indigo-500 to-purple-700 min-h-screen flex items-center justify-center">
-    <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">{{ config('app.name') }}</h1>
-            <p class="text-gray-600 mt-2">Tenant Portal Login</p>
-        </div>
+@extends('layouts.auth')
 
-        <div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded mb-4">
-            <p class="text-sm">Please login to access your tenant dashboard.</p>
-        </div>
+@section('title', 'Tenant Login')
+@section('eyebrow', 'Tenant Access')
+@section('headline', 'Work inside {{ $tenant->name }} without touching any other tenant data.')
+@section('subheadline', 'The middleware switches PostgreSQL schemas before authentication and task queries are resolved.')
 
-        <form action="{{ url('/tenant/login') }}" method="POST">
-            @csrf
-
-            <div class="mb-6">
-                <label class="block text-gray-700 font-medium mb-2">Email Address</label>
-                <input type="email" name="email" required autofocus
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-            </div>
-
-            <div class="mb-6">
-                <label class="block text-gray-700 font-medium mb-2">Password</label>
-                <input type="password" name="password" required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-            </div>
-
-            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition font-semibold">
-                Login
-            </button>
-        </form>
-
-        <div class="mt-6 text-center">
-            <p class="text-gray-600 text-sm">
-                Don't have an account? 
-                <a href="{{ route('tenant.register') }}" class="text-indigo-600 hover:text-indigo-800 font-medium">
-                    Register here
-                </a>
-            </p>
-        </div>
+@section('content')
+    <div>
+        <p class="text-sm font-semibold uppercase tracking-[0.28em] text-orange-600 dark:text-orange-300">Tenant Login</p>
+        <h2 class="mt-4 text-3xl font-semibold">{{ $tenant->name }}</h2>
+        <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">Slug: `{{ $tenant->slug }}` · Schema: `{{ $tenant->schema_name }}`</p>
     </div>
-</body>
-</html>
+
+    <div class="surface-muted mt-8 p-4 text-sm">
+        <p class="font-semibold">Demo credentials</p>
+        <p class="mt-2">Email: `owner@acme.test`</p>
+        <p>Password: `password`</p>
+    </div>
+
+    <form action="{{ route('tenant.login', ['tenant' => $tenant->slug]) }}" method="POST" class="mt-8 space-y-5">
+        @csrf
+        <div>
+            <label for="email" class="text-sm font-medium">Email address</label>
+            <input id="email" type="email" name="email" value="{{ old('email') }}" class="form-field" required autofocus>
+        </div>
+        <div>
+            <label for="password" class="text-sm font-medium">Password</label>
+            <input id="password" type="password" name="password" class="form-field" required>
+        </div>
+        <label class="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+            <input type="checkbox" name="remember" value="1" class="h-4 w-4 rounded border-slate-300">
+            Keep me signed in on this browser
+        </label>
+        <button type="submit" class="btn-primary w-full" data-loading-button data-loading-text="Signing in...">
+            Enter Workspace
+        </button>
+    </form>
+@endsection

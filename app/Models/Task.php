@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Traits\UsesUUID;
-use Database\Factories\TaskFactory;
+use App\Enums\TaskStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Task extends Model
 {
-    /** @use HasFactory<TaskFactory> */
-    use HasFactory, UsesUUID;
+    use HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -22,12 +19,11 @@ class Task extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'user_id',
         'title',
         'description',
         'status',
         'due_date',
-        'created_by',
-        'assigned_to',
     ];
 
     /**
@@ -38,19 +34,13 @@ class Task extends Model
     protected function casts(): array
     {
         return [
+            'status' => TaskStatus::class,
             'due_date' => 'datetime',
-            'created_at' => 'datetime',
-            'updated_at' => 'datetime',
         ];
     }
 
-    public function creator()
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function assignee()
-    {
-        return $this->belongsTo(User::class, 'assigned_to');
+        return $this->belongsTo(User::class);
     }
 }

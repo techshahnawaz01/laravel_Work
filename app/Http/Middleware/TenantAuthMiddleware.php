@@ -17,7 +17,7 @@ class TenantAuthMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         if (!Auth::guard('web')->check()) {
-            return redirect()->route('tenant.login');
+            return redirect()->route('tenant.login', ['tenant' => $request->route('tenant')]);
         }
 
         return $next($request);
