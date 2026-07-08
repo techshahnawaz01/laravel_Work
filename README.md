@@ -83,6 +83,16 @@ Seeding creates:
 - `tenant_acme`
 - tenant users and sample tasks
 
+Super admin:
+- `http://127.0.0.1:8000/admin/login`
+- `admin@example.com`
+- `password`
+
+Tenant:
+- `http://127.0.0.1:8000/tenant/acme/login`
+- `owner@acme.test`
+- `password`
+
 ## Default Credentials
 
 Super admin:
@@ -93,6 +103,7 @@ Tenant:
 - URL: `/tenant/acme/login`
 - Email: `owner@acme.test`
 - Password: `password`
+
 
 ## Tenant Creation
 
