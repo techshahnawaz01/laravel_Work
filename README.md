@@ -133,19 +133,4 @@ npm run build
 - `/tenant/{slug}/dashboard`
 - `/tenant/{slug}/tasks`
 
-## Project Structure
-
-- [app/Http/Controllers](/Users/li/MyProjects/Task_laravel/app/Http/Controllers)
-- [app/Http/Requests](/Users/li/MyProjects/Task_laravel/app/Http/Requests)
-- [app/Http/Middleware](/Users/li/MyProjects/Task_laravel/app/Http/Middleware)
-- [app/Models](/Users/li/MyProjects/Task_laravel/app/Models)
-- [app/Policies](/Users/li/MyProjects/Task_laravel/app/Policies)
-- [app/Services](/Users/li/MyProjects/Task_laravel/app/Services)
-- [database/migrations](/Users/li/MyProjects/Task_laravel/database/migrations)
-- [database/migrations/tenant](/Users/li/MyProjects/Task_laravel/database/migrations/tenant)
-- [resources/views](/Users/li/MyProjects/Task_laravel/resources/views)
-
-## Notes
-
-- Task authorization lives in [TaskPolicy.php](/Users/li/MyProjects/Task_laravel/app/Policies/TaskPolicy.php).
-- Tenant provisioning lives in [TenantService.php](/Users/li/MyProjects/Task_laravel/app/Services/TenantService.php) and [TenantSchemaService.php](/Users/li/MyProjects/Task_laravel/app/Services/TenantSchemaService.php).
+ 
