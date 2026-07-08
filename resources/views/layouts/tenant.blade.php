@@ -35,12 +35,6 @@
                 @endif
             </nav>
 
-            <div class="mt-10 surface-muted p-4 text-sm text-slate-300">
-                <p class="font-semibold text-white">Tenant Login</p>
-                <p class="mt-2">`owner@acme.test`</p>
-                <p>`password`</p>
-            </div>
-
             @if($currentTenant && auth()->check())
                 <form action="{{ route('tenant.logout', ['tenant' => request()->route('tenant')]) }}" method="POST" class="mt-6">
                     @csrf

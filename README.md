@@ -88,22 +88,12 @@ Super admin:
 - `admin@example.com`
 - `password`
 
-Tenant:
-- `http://127.0.0.1:8000/tenant/acme/login`
-- `owner@acme.test`
-- `password`
-
 ## Default Credentials
 
 Super admin:
 - Email: `admin@example.com`
 - Password: `password`
-
-Tenant:
-- URL: `/tenant/acme/login`
-- Email: `owner@acme.test`
-- Password: `password`
-
+ 
 
 ## Tenant Creation
 

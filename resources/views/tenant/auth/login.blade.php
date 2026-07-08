@@ -12,11 +12,6 @@
         <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">Slug: `{{ $tenant->slug }}` · Schema: `{{ $tenant->schema_name }}`</p>
     </div>
 
-    <div class="surface-muted mt-8 p-4 text-sm">
-        <p class="font-semibold">Demo credentials</p>
-        <p class="mt-2">Email: `owner@acme.test`</p>
-        <p>Password: `password`</p>
-    </div>
 
     <form action="{{ route('tenant.login', ['tenant' => $tenant->slug]) }}" method="POST" class="mt-8 space-y-5">
         @csrf

@@ -25,13 +25,6 @@
                     Tenants
                 </a>
             </nav>
-
-            <div class="mt-10 surface-muted p-4 text-sm text-slate-300">
-                <p class="font-semibold text-white">Default Admin</p>
-                <p class="mt-2">`admin@example.com`</p>
-                <p>`password`</p>
-            </div>
-
             <form action="{{ route('admin.logout') }}" method="POST" class="mt-6">
                 @csrf
                 <button type="submit" class="btn-secondary w-full">

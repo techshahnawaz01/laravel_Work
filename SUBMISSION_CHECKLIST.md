@@ -39,7 +39,5 @@ Super admin:
 - `admin@example.com`
 - `password`
 
-Tenant:
-- `owner@acme.test`
-- `password`
+ 
 

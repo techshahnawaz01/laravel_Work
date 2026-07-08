@@ -39,11 +39,6 @@ Super admin:
 - `admin@example.com`
 - `password`
 
-Tenant:
-- `http://127.0.0.1:8000/tenant/acme/login`
-- `owner@acme.test`
-- `password`
-
 ## If Something Fails
 
 - Clear config cache: `php artisan config:clear`
